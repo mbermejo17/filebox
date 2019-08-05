@@ -1,4 +1,5 @@
 const fs = require('fs'),
+    util = require('util'),
     fsextra = require('fs-extra'),
     mime = require('mime-type'),
     mimeType = require('mime'),
@@ -29,7 +30,8 @@ const base64 = require('base-64');
 const userData = {
     RootPath : '/'
 };
-
+const astat = util.promisify(fs.stat);
+const areaddir = util.promisify(fs.readdir);
 
 let _getStats = (p) => {
     fs.stat(p, (err, stats) => {
@@ -87,6 +89,36 @@ const _sendMail = async function(userName, destName, aFile, Url) {
     }); */
 };
 
+let _sortByAttribute = (array, ...attrs) =>{
+    // generate an array of predicate-objects contains
+    // property getter, and descending indicator
+    let predicates = attrs.map(pred => {
+      let descending = pred.charAt(0) === '-' ? -1 : 1;
+      pred = pred.replace(/^-/, '');
+      return {
+        getter: o => o[pred],
+        descend: descending
+      };
+    });
+    // schwartzian transform idiom implementation. aka: "decorate-sort-undecorate"
+    return array.map(item => {
+      return {
+        src: item,
+        compareValues: predicates.map(predicate => predicate.getter(item))
+      };
+    })
+    .sort((o1, o2) => {
+      let i = -1, result = 0;
+      while (++i < predicates.length) {
+        if (o1.compareValues[i] < o2.compareValues[i]) result = -1;
+        if (o1.compareValues[i] > o2.compareValues[i]) result = 1;
+        if (result *= predicates[i].descend) break;
+      }
+      return result;
+    })
+    .map(item => item.src);
+  }
+
 const _formatSize = (bytes) => {
     if (bytes >= 1073741824) {
         bytes = parseInt(bytes / 1000000000) + " GB";
@@ -104,12 +136,49 @@ const _formatSize = (bytes) => {
     return bytes;
 };
 
+const aGetFiles = async (dir) => {
+    // Get this directory's contents
+    
+    const files = await areaddir(dir);
+    // Wait on all the files of the directory
+    return Promise.all(files
+      // Prepend the directory this file belongs to
+      .map(f => path.join(dir, f))
+      // Iterate the files and see if we need to recurse by type
+      .map(async f => {
+        // See what type of file this is
+        const stats = await astat(f);
+        //console.log('stats ******',stats);
+        let name = f,
+                   isFolder = stats.isDirectory(),
+                   isFile = stats.isFile(),
+                   //stat = stats.statSync(),
+                   date = new Date(stats.mtime).toISOString().replace(/T/, ' ').replace(/\..+/, '');
+                
+                   let r = {
+                        'fullName': f.substr(f.indexOf(pathPrefix)+ pathPrefix.length), 
+                        'name': f.split(path.sep).slice(-1)[0],
+                        'size': stats.size,
+                        'date': date,
+                        'isFolder': isFolder,
+                        'isFile': isFile,
+                        // "mode": parseInt(stat.mode.toString(8), 10)
+                        'mode': stats.mode,
+                        'type': mimeType.getType(f)
+                    };
+        // Recurse if it is a directory, otherwise return the filepath
+        //return stats.isDirectory() ? aGetFiles(f) : f;
+        return r;
+      }));
+
+  }
+
 class FileController {
     getFiles(req, res, next) {
-        let result = {},
-            response = [],
-            // dirPath = req.body.dirPath
-            dirPath = req.query.path;
+        let dirPath = req.query.path,
+            order;
+        
+        if (req.query.order) order = req.query.order.split(',');
 
             
         //if (process.env.NODE_ENV === 'dev') console.log('fileController::req.userData: ', req.userData)
@@ -118,13 +187,26 @@ class FileController {
         //if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:userData: ', userData)
         let rPath = userData.RootPath
         if (process.env.NODE_ENV === 'dev') console.log('getFiles:dirPath.indexOf(rPath) ', dirPath.indexOf(rPath))
-        if (dirPath.indexOf(rPath) != 1 && rPath != '/') {
+        if ( dirPath.indexOf(rPath) != 1 && rPath != '/') {
             return res.send(JSON.stringify({}))
-        }
+        }  
+        if (dirPath.substr(1,1) != '') dirPath = '/'+dirPath; 
         dirPath = normalize(pathPrefix + dirPath)
         if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:realPath ' + dirPath)
         response = (dirPath) => {
-            return fs.readdirSync(dirPath)
+            aGetFiles(dirPath)
+            .then(files => JSON.stringify(files,null,4))
+            .then(list => {
+                if (order) {
+                    return _sortByAttribute(JSON.parse(list),...order);
+                } else {
+                    return _sortByAttribute(JSON.parse(list),'name');
+                }
+            })
+            .then(r => res.send(JSON.stringify(r)))
+            .catch(console.log);
+        
+            /* return fs.readdirSync(dirPath)
                 .reduce((list, file) => {
                     let name = path.join(dirPath, file),
                         isFolder = fs.statSync(name).isDirectory(),
@@ -142,12 +224,19 @@ class FileController {
                         'mode': stat.mode,
                         'type': mimeType.getType(name)
                     })
-                    if (isFile) console.log('mode: ', stat.mode)
-                    return list
-                }, [])
+                    if (isFile) console.log('mode: ', stat.mode);
+                    if (order) {
+                        return _sortByAttribute(list,...order);
+                    } else {
+                        return _sortByAttribute(list,'name');
+                    }
+                }, []) */
+
         }
         if (process.env.NODE_ENV === 'dev') console.log(response(dirPath))
-        res.send(JSON.stringify(response(dirPath)))
+        //res.send(JSON.stringify(response(dirPath)))
+        //console.log(response);
+        //res.send(JSON.stringify(response));
     }
 
     newFolder(req, res, next) {
