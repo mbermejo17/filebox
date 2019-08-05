@@ -193,50 +193,22 @@ class FileController {
         if (dirPath.substr(1,1) != '') dirPath = '/'+dirPath; 
         dirPath = normalize(pathPrefix + dirPath)
         if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:realPath ' + dirPath)
-        response = (dirPath) => {
+        
             aGetFiles(dirPath)
-            .then(files => JSON.stringify(files,null,4))
             .then(list => {
                 if (order) {
-                    return _sortByAttribute(JSON.parse(list),...order);
+                    return _sortByAttribute(list,...order);
                 } else {
-                    return _sortByAttribute(JSON.parse(list),'name');
+                    return _sortByAttribute(list,'name');
                 }
             })
-            .then(r => res.send(JSON.stringify(r)))
-            .catch(console.log);
-        
-            /* return fs.readdirSync(dirPath)
-                .reduce((list, file) => {
-                    let name = path.join(dirPath, file),
-                        isFolder = fs.statSync(name).isDirectory(),
-                        isFile = fs.statSync(name).isFile(),
-                        stat = fs.statSync(name),
-                        date = new Date(stat.mtime).toISOString().replace(/T/, ' ').replace(/\..+/, '')
-                    list = list || []
-                    list.push({
-                        'name': name.split(path.sep).slice(-1)[0],
-                        'size': stat.size,
-                        'date': date,
-                        'isFolder': isFolder,
-                        'isFile': isFile,
-                        // "mode": parseInt(stat.mode.toString(8), 10)
-                        'mode': stat.mode,
-                        'type': mimeType.getType(name)
-                    })
-                    if (isFile) console.log('mode: ', stat.mode);
-                    if (order) {
-                        return _sortByAttribute(list,...order);
-                    } else {
-                        return _sortByAttribute(list,'name');
-                    }
-                }, []) */
-
-        }
-        if (process.env.NODE_ENV === 'dev') console.log(response(dirPath))
-        //res.send(JSON.stringify(response(dirPath)))
-        //console.log(response);
-        //res.send(JSON.stringify(response));
+            .then(r => {
+                return res.status(200).send(JSON.stringify({status: 'OK', data: r}));
+            })
+            .catch(err => {
+                if (process.env.NODE_ENV === 'dev') console.log(err);
+                res.status(404).send(JSON.stringify({status:'FAIL',data: err}));
+            });
     }
 
     newFolder(req, res, next) {
