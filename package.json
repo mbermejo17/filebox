@@ -4,16 +4,26 @@
   "description": "Gestion de archivos ",
   "main": "server.js",
   "dependencies": {
+    "base-64": "^0.1.0",
     "body-parser": "^1.19.0",
     "chalk": "^2.4.2",
     "cookie-parser": "^1.4.4",
     "delivery": "0.0.6",
     "dotenv": "^8.0.0",
     "express": "^4.17.1",
+    "formidable": "^1.2.1",
     "https": "^1.0.0",
+    "js-base64": "^2.5.1",
+    "jsonwebtoken": "^8.5.1",
     "log4js": "^4.5.1",
+    "md5-file": "^4.0.0",
+    "mime-type": "^3.0.7",
+    "moment": "^2.24.0",
+    "os": "^0.1.1",
     "path": "^0.12.7",
-    "url": "^0.11.0"
+    "sqlite3": "^4.0.9",
+    "url": "^0.11.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.5",

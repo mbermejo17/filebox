@@ -1,13 +1,8 @@
 const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
-//const morgan = require("morgan");
 const bodyParser = require("body-parser");
-//const ApiRoutes = require("./routes/api");
-const userRoutes = require('./app/routes/userRoutes');
 const fileRoutes = require('./app/routes/fileRoutes');
-const adminRoutes = require('./app/routes/adminRoutes');
-//const MntRoutes = require('./routes/mnt');
 const path = require('path');
 const debug = require('debug');
 global.db = null;
@@ -42,9 +37,9 @@ app.use((req, res, next) => {
 
 // Routes handle requests
 
-app.use("/", userRoutes);
+//app.use("/", userRoutes);
 app.use("/files", fileRoutes);
-app.use("/admin", adminRoutes);
+//app.use("/admin", adminRoutes);
 //app.use("/mnt", MntRoutes);
 
 

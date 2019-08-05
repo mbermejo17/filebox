@@ -11,21 +11,24 @@ const fs = require('fs'),
     normalize = require('normalize-path'),
     formidable = require('formidable'),
     uuidv4 = require('uuid/v4'),
-    Util = require('./../models/util'),
-    moment = require('moment'),
-    mail = require('mail').Mail({
+    //Util = require('./../models/util'),
+    moment = require('moment');
+    /* mail = require('mail').Mail({
         host: settings.emailServer,
         port: settings.emailPort,
         username: settings.emailUserName,
         password: settings.emailUserPassword,
         secure: true,
-        insecureAuth: true
-    });
+        insecureAuth: true 
+    }
+    )*/
 
 const Audit = require("../controllers/auditController");
 const log = global.logger;
 const base64 = require('base-64');
-
+const userData = {
+    RootPath : '/'
+};
 
 
 let _getStats = (p) => {
@@ -108,10 +111,11 @@ class FileController {
             // dirPath = req.body.dirPath
             dirPath = req.query.path;
 
-        if (process.env.NODE_ENV === 'dev') console.log('fileController::req.userData: ', req.userData)
+            
+        //if (process.env.NODE_ENV === 'dev') console.log('fileController::req.userData: ', req.userData)
         if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:dirPath: ', dirPath)
-        let userData = JSON.parse(req.userData)
-        if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:userData: ', userData)
+        //let userData = JSON.parse(req.userData)
+        //if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:userData: ', userData)
         let rPath = userData.RootPath
         if (process.env.NODE_ENV === 'dev') console.log('getFiles:dirPath.indexOf(rPath) ', dirPath.indexOf(rPath))
         if (dirPath.indexOf(rPath) != 1 && rPath != '/') {
