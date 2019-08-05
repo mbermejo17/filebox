@@ -1,3 +1,4 @@
+require('dotenv/config)';
 const https = require('https');
 const fs = require('fs');
 const app = require('./app');
@@ -9,7 +10,7 @@ const dl = require('delivery');
 const color = require('chalk');
 
 global.appRoot = path.resolve(__dirname);
-process.env.NODE_ENV = "dev";
+const MODE_ENV = process.env.NODE_ENV;
 
 // ********************************   Configuracion logger
 const log4js = require('log4js');

@@ -1,0 +1,13 @@
+{
+    "wssURL": "wss://localhost:8443",
+    "serverPORT": "8443",
+    "dbName": "app.db",
+    "dbPath": "./app/db",
+    "jwtKey": "Ejz1IpiziX_niPnMw3TGss2UQ",
+    "repositoryPath": "./repository",
+    "maxFileSize": 10000,
+    "emailServer": "172.100.10.234",
+    "emailPort": 25,
+    "emailUserName": "filemanager@filebox.unifyspain.es",
+    "emailUserPassword": "qazWsx$1"
+}
