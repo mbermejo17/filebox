@@ -13,22 +13,23 @@ const fs = require('fs'),
     formidable = require('formidable'),
     uuidv4 = require('uuid/v4'),
     //Util = require('./../models/util'),
-    moment = require('moment');
-    /* mail = require('mail').Mail({
-        host: settings.emailServer,
-        port: settings.emailPort,
-        username: settings.emailUserName,
-        password: settings.emailUserPassword,
-        secure: true,
-        insecureAuth: true 
-    }
-    )*/
+    dConsole = require('../helpers/helpers').debugConsole;
+moment = require('moment');
+/* mail = require('mail').Mail({
+    host: settings.emailServer,
+    port: settings.emailPort,
+    username: settings.emailUserName,
+    password: settings.emailUserPassword,
+    secure: true,
+    insecureAuth: true 
+}
+)*/
 
 const Audit = require("../controllers/auditController");
 const log = global.logger;
 const base64 = require('base-64');
 const userData = {
-    RootPath : '/'
+    RootPath: '/'
 };
 const astat = util.promisify(fs.stat);
 const areaddir = util.promisify(fs.readdir);
@@ -68,7 +69,7 @@ fs.readdirSync(dir)
     []);
  */
 
-const _sendMail = async function(userName, destName, aFile, Url) {
+const _sendMail = async function (userName, destName, aFile, Url) {
     /* await mail.message({
         from: "filemanager@filebox.unifyspain.es",
         to: [ destName],
@@ -89,35 +90,35 @@ const _sendMail = async function(userName, destName, aFile, Url) {
     }); */
 };
 
-let _sortByAttribute = (array, ...attrs) =>{
+let _sortByAttribute = (array, ...attrs) => {
     // generate an array of predicate-objects contains
     // property getter, and descending indicator
     let predicates = attrs.map(pred => {
-      let descending = pred.charAt(0) === '-' ? -1 : 1;
-      pred = pred.replace(/^-/, '');
-      return {
-        getter: o => o[pred],
-        descend: descending
-      };
+        let descending = pred.charAt(0) === '-' ? -1 : 1;
+        pred = pred.replace(/^-/, '');
+        return {
+            getter: o => o[pred],
+            descend: descending
+        };
     });
     // schwartzian transform idiom implementation. aka: "decorate-sort-undecorate"
     return array.map(item => {
-      return {
-        src: item,
-        compareValues: predicates.map(predicate => predicate.getter(item))
-      };
+        return {
+            src: item,
+            compareValues: predicates.map(predicate => predicate.getter(item))
+        };
     })
-    .sort((o1, o2) => {
-      let i = -1, result = 0;
-      while (++i < predicates.length) {
-        if (o1.compareValues[i] < o2.compareValues[i]) result = -1;
-        if (o1.compareValues[i] > o2.compareValues[i]) result = 1;
-        if (result *= predicates[i].descend) break;
-      }
-      return result;
-    })
-    .map(item => item.src);
-  }
+        .sort((o1, o2) => {
+            let i = -1, result = 0;
+            while (++i < predicates.length) {
+                if (o1.compareValues[i] < o2.compareValues[i]) result = -1;
+                if (o1.compareValues[i] > o2.compareValues[i]) result = 1;
+                if (result *= predicates[i].descend) break;
+            }
+            return result;
+        })
+        .map(item => item.src);
+}
 
 const _formatSize = (bytes) => {
     if (bytes >= 1073741824) {
@@ -138,79 +139,74 @@ const _formatSize = (bytes) => {
 
 const aGetFiles = async (dir) => {
     // Get this directory's contents
-    
+
     const files = await areaddir(dir);
     // Wait on all the files of the directory
     return Promise.all(files
-      // Prepend the directory this file belongs to
-      .map(f => path.join(dir, f))
-      // Iterate the files and see if we need to recurse by type
-      .map(async f => {
-        // See what type of file this is
-        const stats = await astat(f);
-        //console.log('stats ******',stats);
-        let name = f,
-                   isFolder = stats.isDirectory(),
-                   isFile = stats.isFile(),
-                   //stat = stats.statSync(),
-                   date = new Date(stats.mtime).toISOString().replace(/T/, ' ').replace(/\..+/, '');
-                
-                   let r = {
-                        'fullName': f.substr(f.indexOf(pathPrefix)+ pathPrefix.length), 
-                        'name': f.split(path.sep).slice(-1)[0],
-                        'size': stats.size,
-                        'date': date,
-                        'isFolder': isFolder,
-                        'isFile': isFile,
-                        // "mode": parseInt(stat.mode.toString(8), 10)
-                        'mode': stats.mode,
-                        'type': mimeType.getType(f)
-                    };
-        // Recurse if it is a directory, otherwise return the filepath
-        //return stats.isDirectory() ? aGetFiles(f) : f;
-        return r;
-      }));
+        // Prepend the directory this file belongs to
+        .map(f => path.join(dir, f))
+        // Iterate the files and see if we need to recurse by type
+        .map(async f => {
+            // See what type of file this is
+            const stats = await astat(f);
+            //console.log('stats ******',stats);
+            let name = f,
+                isFolder = stats.isDirectory(),
+                isFile = stats.isFile(),
+                //stat = stats.statSync(),
+                date = new Date(stats.mtime).toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
-  }
+            let r = {
+                'fullName': f.substr(f.indexOf(pathPrefix) + pathPrefix.length),
+                'name': f.split(path.sep).slice(-1)[0],
+                'size': stats.size,
+                'date': date,
+                'isFolder': isFolder,
+                'isFile': isFile,
+                // "mode": parseInt(stat.mode.toString(8), 10)
+                'mode': stats.mode,
+                'type': mimeType.getType(f)
+            };
+            // Recurse if it is a directory, otherwise return the filepath
+            //return stats.isDirectory() ? aGetFiles(f) : f;
+            return r;
+        }));
+
+}
 
 class FileController {
+    ////////////  getFiles ///////////
     getFiles(req, res, next) {
-        let dirPath = req.query.path,
-            order;
-        
-        if (req.query.order) order = req.query.order.split(',');
+        let dirPath = req.query.path;
+        let order;
+        //let userData = JSON.parse(req.userData);
+        let rPath = userData.RootPath;
 
-            
-        //if (process.env.NODE_ENV === 'dev') console.log('fileController::req.userData: ', req.userData)
-        if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:dirPath: ', dirPath)
-        //let userData = JSON.parse(req.userData)
-        //if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:userData: ', userData)
-        let rPath = userData.RootPath
-        if (process.env.NODE_ENV === 'dev') console.log('getFiles:dirPath.indexOf(rPath) ', dirPath.indexOf(rPath))
-        if ( dirPath.indexOf(rPath) != 1 && rPath != '/') {
-            return res.send(JSON.stringify({}))
-        }  
-        if (dirPath.substr(1,1) != '') dirPath = '/'+dirPath; 
-        dirPath = normalize(pathPrefix + dirPath)
-        if (process.env.NODE_ENV === 'dev') console.log('fileController::getFiles:realPath ' + dirPath)
-        
-            aGetFiles(dirPath)
+        //dConsole('fileController::req.userData: ', req.userData);
+        dConsole('fileController::getFiles:dirPath: ', dirPath); 
+        dConsole('getFiles:dirPath.indexOf(rPath) ', dirPath.indexOf(rPath));
+        //dConsole('fileController::getFiles:userData: ', userData);
+
+        if (req.query.order) order = req.query.order.split(',');    
+        if (dirPath.indexOf(rPath) != 1 && rPath != '/') return res.send(JSON.stringify({}));
+        if (dirPath.substr(1, 1) != '') dirPath = '/' + dirPath;
+
+        dirPath = normalize(pathPrefix + dirPath);
+        dConsole('fileController::getFiles:realPath ' + dirPath);
+
+        aGetFiles(dirPath)
             .then(list => {
-                if (order) {
-                    return _sortByAttribute(list,...order);
-                } else {
-                    return _sortByAttribute(list,'name');
-                }
+                if (order) return _sortByAttribute(list, ...order);
+                return _sortByAttribute(list, 'name');
             })
-            .then(r => {
-                return res.status(200).send(JSON.stringify({status: 'OK', data: r}));
-            })
+            .then(r => res.status(200).send(JSON.stringify({ status: 'OK', data: r })))
             .catch(err => {
-                if (process.env.NODE_ENV === 'dev') console.log(err);
-                res.status(404).send(JSON.stringify({status:'FAIL',data: err}));
+                dConsole(0,err);
+                res.status(404).send(JSON.stringify({ status: 'FAIL', data: err }));
             });
     }
 
+    ////////////  newFolder ///////////    
     newFolder(req, res, next) {
         let userName = req.cookies.UserName;
         let browserIP = (req.headers['x-forwarded-for'] ||
@@ -224,24 +220,24 @@ class FileController {
         let newFolder = normalize(pathPrefix + destPath + '/' + folderName.toUpperCase())
         let currentDate = moment(new Date()).format('DD/MM/YYYY  HH:mm:ss');
         let currentUnixDate = moment().format('x');
-        if (process.env.NODE_ENV === 'dev') console.log('Creating new folder ' + newFolder + ' ...')
-        fs.mkdir(newFolder, function(err) {
+        dConsole('Creating new folder ' + newFolder + ' ...');
+        fs.mkdir(newFolder, function (err) {
             if (err) {
-                if (process.env.NODE_ENV === 'dev') console.error(err)
+                dConsole(1, err);
                 Audit.Add({
                     userName: userName
                 }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: newFolder || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, err, 'Add new Folder', 'FAIL', (result) => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                        clientIP: clientIP || '',
+                        browserIP: browserIP || ''
+                    }, {
+                        fileName: newFolder || '',
+                        fileSize: 0
+                    }, {
+                        dateString: currentDate,
+                        unixDate: currentUnixDate
+                    }, err, 'Add new Folder', 'FAIL', (result) => {
+                        if (process.env.NODE_ENV === 'dev') console.log(result);
+                    });
                 if (err.code == 'EEXIST') {
                     res.send(JSON.stringify({
                         status: 'FAIL',
@@ -260,17 +256,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: newFolder || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, 'Carpeta ' + folderName + ' creada', 'Add new Folder', 'OK', (result) => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                        clientIP: clientIP || '',
+                        browserIP: browserIP || ''
+                    }, {
+                        fileName: newFolder || '',
+                        fileSize: 0
+                    }, {
+                        dateString: currentDate,
+                        unixDate: currentUnixDate
+                    }, 'Carpeta ' + folderName + ' creada', 'Add new Folder', 'OK', (result) => {
+                        if (process.env.NODE_ENV === 'dev') console.log(result);
+                    });
                 res.send(JSON.stringify({
                     status: 'OK',
                     message: 'Carpeta ' + folderName + ' creada',
@@ -299,24 +295,24 @@ class FileController {
         let currentDate = moment(new Date()).format('DD/MM/YYYY  HH:mm:ss');
         let currentUnixDate = moment().format('x');
         if (process.env.NODE_ENV === 'dev') console.log('Deleting file ' + fullName + ' ...')
-        fsextra.remove(fullName, function(err) {
+        fsextra.remove(fullName, function (err) {
             if (err) {
                 if (process.env.NODE_ENV === 'dev') console.error(err)
                 global.logger.error(`[${userName}] fileController::FileController deleteFiles() ->Error deleting file ${fullName} ${err}`);
                 Audit.Add({
                     userName: userName
                 }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: fullName || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, err, 'Delete File', 'FAIL', () => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                        clientIP: clientIP || '',
+                        browserIP: browserIP || ''
+                    }, {
+                        fileName: fullName || '',
+                        fileSize: 0
+                    }, {
+                        dateString: currentDate,
+                        unixDate: currentUnixDate
+                    }, err, 'Delete File', 'FAIL', () => {
+                        if (process.env.NODE_ENV === 'dev') console.log(result);
+                    });
                 res.send(JSON.stringify({
                     status: 'FAIL',
                     data: err
@@ -327,17 +323,17 @@ class FileController {
             Audit.Add({
                 userName: userName
             }, {
-                clientIP: clientIP || '',
-                browserIP: browserIP || ''
-            }, {
-                fileName: fullName || '',
-                fileSize: 0
-            }, {
-                dateString: currentDate,
-                unixDate: currentUnixDate
-            }, fullName, 'Delete File', 'OK', () => {
-                if (process.env.NODE_ENV === 'dev') console.log(result);
-            });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: fullName || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, fullName, 'Delete File', 'OK', () => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
             res.send(JSON.stringify({
                 status: 'OK',
                 data: {
@@ -360,24 +356,24 @@ class FileController {
         let currentUnixDate = moment().format('x');
 
         newFolder = normalize(pathPrefix + newFolder)
-        fsextra.remove(newFolder, function(err) {
+        fsextra.remove(newFolder, function (err) {
             if (err) {
                 console.error(err)
                 global.logger.error(`[${userName}] fileController::FileController deleteFolder() ->${newFolder} ${err}`);
                 Audit.Add({
                     userName: userName
                 }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: fullName || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, err, 'Delete Folder', 'FAIL', () => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                        clientIP: clientIP || '',
+                        browserIP: browserIP || ''
+                    }, {
+                        fileName: fullName || '',
+                        fileSize: 0
+                    }, {
+                        dateString: currentDate,
+                        unixDate: currentUnixDate
+                    }, err, 'Delete Folder', 'FAIL', () => {
+                        if (process.env.NODE_ENV === 'dev') console.log(result);
+                    });
                 res.send(JSON.stringify({
                     status: 'FAIL',
                     data: err
@@ -388,17 +384,17 @@ class FileController {
             Audit.Add({
                 userName: userName
             }, {
-                clientIP: clientIP || '',
-                browserIP: browserIP || ''
-            }, {
-                fileName: fullName || '',
-                fileSize: 0
-            }, {
-                dateString: currentDate,
-                unixDate: currentUnixDate
-            }, newFolder, 'Delete Folder', 'OK', () => {
-                if (process.env.NODE_ENV === 'dev') console.log(result);
-            });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: fullName || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, newFolder, 'Delete Folder', 'OK', () => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
             res.send(JSON.stringify({
                 status: 'OK',
                 data: req.body.path
@@ -416,7 +412,7 @@ class FileController {
         md5File(fullFileName, (err, hash) => {
             if (err) console.log('******* err MD5 *******'.err);
             console.log(`********* The MD5 sum : ${hash} ************`);
-            fs.writeFile(fullFileName + ".md5", hash, function(err) {
+            fs.writeFile(fullFileName + ".md5", hash, function (err) {
                 if (err) {
                     res.send(JSON.stringify({
                         status: 'FAIL',
@@ -442,7 +438,7 @@ class FileController {
 
     upload(req, res, next) {
         if (process.env.NODE_ENV === 'dev') console.log(req.query)
-            // create an incoming form object
+        // create an incoming form object
         let form = new formidable.IncomingForm();
         let repoPath = req.query.destPath;
         let fileName = '';
@@ -466,15 +462,15 @@ class FileController {
 
 
         if (process.env.NODE_ENV === 'dev') console.log('upload:repoPath ' + form.uploadDir)
-            // every time a file has been uploaded successfully,
-            // rename it to it's orignal name
-        form.on('file', function(field, file) {
+        // every time a file has been uploaded successfully,
+        // rename it to it's orignal name
+        form.on('file', function (field, file) {
             if (process.env.NODE_ENV === 'dev') console.log(file);
             fileName = file.name;
             fileSize = file.size;
-            fs.rename(file.path, path.join(form.uploadDir, file.name), function(err) {
+            fs.rename(file.path, path.join(form.uploadDir, file.name), function (err) {
                 if (err) throw err;
-                fs.stat(path.join(form.uploadDir, file.name), function(err, stats) {
+                fs.stat(path.join(form.uploadDir, file.name), function (err, stats) {
                     if (err) throw err;
                     console.log('stats: ' + JSON.stringify(stats));
                 });
@@ -483,23 +479,23 @@ class FileController {
         });
 
         // log any errors that occur
-        form.on('error', function(err) {
+        form.on('error', function (err) {
             if (process.env.NODE_ENV === 'dev') console.log('An error has occured: \n' + err)
             global.logger.error(`[${userName}] fileController::FileController upload() ->${fileName} ${err}`);
             Audit.Add({
                 userName: userName
             }, {
-                clientIP: clientIP || '',
-                browserIP: browserIP || ''
-            }, {
-                fileName: repoPath || '',
-                fileSize: fileSize
-            }, {
-                dateString: currentDate,
-                unixDate: currentUnixDate
-            }, err, 'Upload File', 'FAIL', () => {
-                if (process.env.NODE_ENV === 'dev') console.log(result);
-            });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: repoPath || '',
+                    fileSize: fileSize
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, err, 'Upload File', 'FAIL', () => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
             res.send(JSON.stringify({
                 status: 'FAIL',
                 message: err,
@@ -510,22 +506,22 @@ class FileController {
         });
 
         // once all the files have been uploaded, send a response to the client
-        form.on('end', function() {
+        form.on('end', function () {
             global.logger.info(`[${userName}] fileController::FileController upload() ->${fileName} File Uploaded successfully!`);
             Audit.Add({
                 userName: userName
             }, {
-                clientIP: clientIP || '',
-                browserIP: browserIP || ''
-            }, {
-                fileName: repoPath || '',
-                fileSize: fileSize
-            }, {
-                dateString: currentDate,
-                unixDate: currentUnixDate
-            }, fileName, 'Upload File', 'OK', () => {
-                if (process.env.NODE_ENV === 'dev') console.log(result);
-            });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: repoPath || '',
+                    fileSize: fileSize
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, fileName, 'Upload File', 'OK', () => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
 
             res.send(JSON.stringify({
                 status: 'OK',
@@ -579,7 +575,7 @@ class FileController {
             "data": encodeURIComponent(base64.encode(normalize(pathPrefix + path + '/' + fileName)))
         });*/
         return res.download(normalize(pathPrefix + path + '/' + fileName), fileName)
-            //res.download(normalize(pathPrefix + '\\' + fileName), fileName)
+        //res.download(normalize(pathPrefix + '\\' + fileName), fileName)
     }
 
     getDownload(req, res, next) {
@@ -669,7 +665,7 @@ class FileController {
         Util.getById(fileId, (d) => {
             if (d.status == 'OK') {
                 if (process.env.NODE_ENV === 'dev') console.log(d)
-                    //fileRealPath = d.data.RealPath
+                //fileRealPath = d.data.RealPath
                 fileName = d.data[0].FileName
                 global.logger.info(` [$ { userName }] fileController::FileController shareFileDownload() - > $ { fileName }
                     Shared File downloaded successfully!`);
@@ -748,17 +744,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, d.data, 'Share File', 'OK', (result) => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                        clientIP: clientIP || '',
+                        browserIP: browserIP || ''
+                    }, {
+                        fileName: '',
+                        fileSize: 0
+                    }, {
+                        dateString: currentDate,
+                        unixDate: currentUnixDate
+                    }, d.data, 'Share File', 'OK', (result) => {
+                        if (process.env.NODE_ENV === 'dev') console.log(result);
+                    });
                 return res.status(200).json({
                     "status": "OK",
                     "message": "",
@@ -768,17 +764,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: fullName || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, d.message, 'Share File', 'FAIL', (result) => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                        clientIP: clientIP || '',
+                        browserIP: browserIP || ''
+                    }, {
+                        fileName: fullName || '',
+                        fileSize: 0
+                    }, {
+                        dateString: currentDate,
+                        unixDate: currentUnixDate
+                    }, d.message, 'Share File', 'FAIL', (result) => {
+                        if (process.env.NODE_ENV === 'dev') console.log(result);
+                    });
                 return res.status(200).json({
                     "status": "FAIL",
                     "message": d.message + "No hay archivos compartidos.",
