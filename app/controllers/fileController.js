@@ -19,7 +19,7 @@ const fs = require('fs'),
 
 /* mail = require('mail').Mail({
     host: settings.emailServer,
-    port: settings.emailPort,
+    port: settings.emailPort,      
     username: settings.emailUserName,
     password: settings.emailUserPassword,
     secure: true,
