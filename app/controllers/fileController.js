@@ -13,8 +13,10 @@ const fs = require('fs'),
     formidable = require('formidable'),
     uuidv4 = require('uuid/v4'),
     //Util = require('./../models/util'),
-    dConsole = require('../helpers/helpers').debugConsole;
-moment = require('moment');
+    dConsole = require('../helpers/helpers').debugConsole,
+    moment = require('moment');
+
+
 /* mail = require('mail').Mail({
     host: settings.emailServer,
     port: settings.emailPort,
@@ -183,11 +185,11 @@ class FileController {
         let rPath = userData.RootPath;
 
         //dConsole('fileController::req.userData: ', req.userData);
-        dConsole('fileController::getFiles:dirPath: ', dirPath); 
+        dConsole('fileController::getFiles:dirPath: ', dirPath);
         dConsole('getFiles:dirPath.indexOf(rPath) ', dirPath.indexOf(rPath));
         //dConsole('fileController::getFiles:userData: ', userData);
 
-        if (req.query.order) order = req.query.order.split(',');    
+        if (req.query.order) order = req.query.order.split(',');
         if (dirPath.indexOf(rPath) != 1 && rPath != '/') return res.send(JSON.stringify({}));
         if (dirPath.substr(1, 1) != '') dirPath = '/' + dirPath;
 
@@ -201,7 +203,7 @@ class FileController {
             })
             .then(r => res.status(200).send(JSON.stringify({ status: 'OK', data: r })))
             .catch(err => {
-                dConsole(0,err);
+                dConsole(0, err);
                 res.status(404).send(JSON.stringify({ status: 'FAIL', data: err }));
             });
     }
@@ -227,17 +229,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                        clientIP: clientIP || '',
-                        browserIP: browserIP || ''
-                    }, {
-                        fileName: newFolder || '',
-                        fileSize: 0
-                    }, {
-                        dateString: currentDate,
-                        unixDate: currentUnixDate
-                    }, err, 'Add new Folder', 'FAIL', (result) => {
-                        if (process.env.NODE_ENV === 'dev') console.log(result);
-                    });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: newFolder || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, err, 'Add new Folder', 'FAIL', (result) => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
                 if (err.code == 'EEXIST') {
                     res.send(JSON.stringify({
                         status: 'FAIL',
@@ -256,17 +258,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                        clientIP: clientIP || '',
-                        browserIP: browserIP || ''
-                    }, {
-                        fileName: newFolder || '',
-                        fileSize: 0
-                    }, {
-                        dateString: currentDate,
-                        unixDate: currentUnixDate
-                    }, 'Carpeta ' + folderName + ' creada', 'Add new Folder', 'OK', (result) => {
-                        if (process.env.NODE_ENV === 'dev') console.log(result);
-                    });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: newFolder || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, 'Carpeta ' + folderName + ' creada', 'Add new Folder', 'OK', (result) => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
                 res.send(JSON.stringify({
                     status: 'OK',
                     message: 'Carpeta ' + folderName + ' creada',
@@ -302,17 +304,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                        clientIP: clientIP || '',
-                        browserIP: browserIP || ''
-                    }, {
-                        fileName: fullName || '',
-                        fileSize: 0
-                    }, {
-                        dateString: currentDate,
-                        unixDate: currentUnixDate
-                    }, err, 'Delete File', 'FAIL', () => {
-                        if (process.env.NODE_ENV === 'dev') console.log(result);
-                    });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: fullName || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, err, 'Delete File', 'FAIL', () => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
                 res.send(JSON.stringify({
                     status: 'FAIL',
                     data: err
@@ -323,17 +325,17 @@ class FileController {
             Audit.Add({
                 userName: userName
             }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: fullName || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, fullName, 'Delete File', 'OK', () => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                clientIP: clientIP || '',
+                browserIP: browserIP || ''
+            }, {
+                fileName: fullName || '',
+                fileSize: 0
+            }, {
+                dateString: currentDate,
+                unixDate: currentUnixDate
+            }, fullName, 'Delete File', 'OK', () => {
+                if (process.env.NODE_ENV === 'dev') console.log(result);
+            });
             res.send(JSON.stringify({
                 status: 'OK',
                 data: {
@@ -363,17 +365,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                        clientIP: clientIP || '',
-                        browserIP: browserIP || ''
-                    }, {
-                        fileName: fullName || '',
-                        fileSize: 0
-                    }, {
-                        dateString: currentDate,
-                        unixDate: currentUnixDate
-                    }, err, 'Delete Folder', 'FAIL', () => {
-                        if (process.env.NODE_ENV === 'dev') console.log(result);
-                    });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: fullName || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, err, 'Delete Folder', 'FAIL', () => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
                 res.send(JSON.stringify({
                     status: 'FAIL',
                     data: err
@@ -384,17 +386,17 @@ class FileController {
             Audit.Add({
                 userName: userName
             }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: fullName || '',
-                    fileSize: 0
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, newFolder, 'Delete Folder', 'OK', () => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                clientIP: clientIP || '',
+                browserIP: browserIP || ''
+            }, {
+                fileName: fullName || '',
+                fileSize: 0
+            }, {
+                dateString: currentDate,
+                unixDate: currentUnixDate
+            }, newFolder, 'Delete Folder', 'OK', () => {
+                if (process.env.NODE_ENV === 'dev') console.log(result);
+            });
             res.send(JSON.stringify({
                 status: 'OK',
                 data: req.body.path
@@ -485,17 +487,17 @@ class FileController {
             Audit.Add({
                 userName: userName
             }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: repoPath || '',
-                    fileSize: fileSize
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, err, 'Upload File', 'FAIL', () => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                clientIP: clientIP || '',
+                browserIP: browserIP || ''
+            }, {
+                fileName: repoPath || '',
+                fileSize: fileSize
+            }, {
+                dateString: currentDate,
+                unixDate: currentUnixDate
+            }, err, 'Upload File', 'FAIL', () => {
+                if (process.env.NODE_ENV === 'dev') console.log(result);
+            });
             res.send(JSON.stringify({
                 status: 'FAIL',
                 message: err,
@@ -511,17 +513,17 @@ class FileController {
             Audit.Add({
                 userName: userName
             }, {
-                    clientIP: clientIP || '',
-                    browserIP: browserIP || ''
-                }, {
-                    fileName: repoPath || '',
-                    fileSize: fileSize
-                }, {
-                    dateString: currentDate,
-                    unixDate: currentUnixDate
-                }, fileName, 'Upload File', 'OK', () => {
-                    if (process.env.NODE_ENV === 'dev') console.log(result);
-                });
+                clientIP: clientIP || '',
+                browserIP: browserIP || ''
+            }, {
+                fileName: repoPath || '',
+                fileSize: fileSize
+            }, {
+                dateString: currentDate,
+                unixDate: currentUnixDate
+            }, fileName, 'Upload File', 'OK', () => {
+                if (process.env.NODE_ENV === 'dev') console.log(result);
+            });
 
             res.send(JSON.stringify({
                 status: 'OK',
@@ -744,17 +746,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                        clientIP: clientIP || '',
-                        browserIP: browserIP || ''
-                    }, {
-                        fileName: '',
-                        fileSize: 0
-                    }, {
-                        dateString: currentDate,
-                        unixDate: currentUnixDate
-                    }, d.data, 'Share File', 'OK', (result) => {
-                        if (process.env.NODE_ENV === 'dev') console.log(result);
-                    });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, d.data, 'Share File', 'OK', (result) => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
                 return res.status(200).json({
                     "status": "OK",
                     "message": "",
@@ -764,17 +766,17 @@ class FileController {
                 Audit.Add({
                     userName: userName
                 }, {
-                        clientIP: clientIP || '',
-                        browserIP: browserIP || ''
-                    }, {
-                        fileName: fullName || '',
-                        fileSize: 0
-                    }, {
-                        dateString: currentDate,
-                        unixDate: currentUnixDate
-                    }, d.message, 'Share File', 'FAIL', (result) => {
-                        if (process.env.NODE_ENV === 'dev') console.log(result);
-                    });
+                    clientIP: clientIP || '',
+                    browserIP: browserIP || ''
+                }, {
+                    fileName: fullName || '',
+                    fileSize: 0
+                }, {
+                    dateString: currentDate,
+                    unixDate: currentUnixDate
+                }, d.message, 'Share File', 'FAIL', (result) => {
+                    if (process.env.NODE_ENV === 'dev') console.log(result);
+                });
                 return res.status(200).json({
                     "status": "FAIL",
                     "message": d.message + "No hay archivos compartidos.",
